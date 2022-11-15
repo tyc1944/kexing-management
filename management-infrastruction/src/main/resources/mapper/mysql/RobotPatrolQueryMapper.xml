@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="org.kexing.management.infrastruction.repository.mybatis.mysql.RobotPatrolQueryMapper">
+    <resultMap id="BaseMape" type="org.kexing.management.domin.model.mysql.robot.RobotPatrol">
+        <id property="id" column="id"/>
+        <result property="robotPatrolLine" column="robot_patrol_line" jdbcType="OTHER" typeHandler="org.kexing.management.infrastruction.FastJsonTypeHandler"/>
+    </resultMap>
+
+    <select id="selectListInspectPage" resultMap="BaseMape">
+        select *
+        from robot_patrol
+        <where>
+            <if test="listInspectRobotInspectionRequest.taskStatus!=null">
+                and task_status =#{listInspectRobotInspectionRequest.taskStatus}
+            </if>
+            <if test="listInspectRobotInspectionRequest.patrolType!=null">
+                and patrol_type =#{listInspectRobotInspectionRequest.patrolType}
+            </if>
+            <if test="listInspectRobotInspectionRequest.dateRange!=null and listInspectRobotInspectionRequest.dateRange.length>0">
+                and start_time >= #{listInspectRobotInspectionRequest.dateRange[0]}
+                <![CDATA[
+                               and  start_time < #{listInspectRobotInspectionRequest.dateRange[1]} + INTERVAL 1 DAY
+                                ]]>
+            </if>
+            <if test="listInspectRobotInspectionRequest.searchField!=null and listInspectRobotInspectionRequest.searchField!=''">
+                and no like concat('%', #{listInspectRobotInspectionRequest.searchField}, '%')
+            </if>
+        </where>
+        <choose>
+            <when test="listInspectRobotInspectionRequest.patrolType !=null">
+                order by start_time desc
+            </when>
+            <otherwise>
+                order by field(patrol_type,"REPEAT_INSPECTION","ONCE_INSPECTION"),start_time desc
+            </otherwise>
+        </choose>
+
+    </select>
+</mapper>

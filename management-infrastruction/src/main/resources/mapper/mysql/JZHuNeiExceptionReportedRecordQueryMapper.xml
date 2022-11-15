@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="org.kexing.management.infrastruction.repository.mybatis.mysql.JZHuNeiExceptionReportedRecordQueryMapper">
+    <resultMap id="baseResult" type="org.kexing.management.domin.model.mysql.jz.JzHuNeiExceptionReportedRecord">
+        <id property="id" column="id"/>
+        <result property="config"
+                javaType="org.kexing.management.domin.model.mysql.ErpDeviceConfig$JZHuNeiDeviceConfig"
+                column="config"
+                jdbcType="VARCHAR"
+                typeHandler="org.kexing.management.infrastruction.FastJsonTypeHandler"/>
+        <result property="uploadDataWithConformityStatus"
+                javaType="org.kexing.management.domin.model.sql_server.JZHuNeiDataUploadDate$HuNeiCheckedExceptionResult"
+                column="upload_data_with_conformity_status"
+                jdbcType="VARCHAR"
+                typeHandler="org.kexing.management.infrastruction.FastJsonTypeHandler"/>
+    </resultMap>
+
+    <select id="selectListExceptionReportedRecordRequestPage"
+            resultMap="baseResult">
+        select *
+        from jz_hu_nei_exception_reported_record hunei
+        <where>
+            and hunei.device_id =#{deviceId}
+            <if test="listExceptionReportedRecordRequest!=null">
+                <if test="listExceptionReportedRecordRequest.dateRange !=null and listExceptionReportedRecordRequest.dateRange.length>0">
+                    and hunei.upload_date_time >= #{listExceptionReportedRecordRequest.dateRange[0]}
+                    <![CDATA[
+                               and  hunei.upload_date_time < #{listExceptionReportedRecordRequest.dateRange[1]} + INTERVAL 1 DAY
+                                ]]>
+                </if>
+            </if>
+        </where>
+        order by hunei.upload_date_time desc
+    </select>
+</mapper>

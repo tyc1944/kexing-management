@@ -1,0 +1,134 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="org.kexing.management.infrastruction.repository.mybatis.sql_server.ErpDeviceQueryMapper">
+    <sql id="EASsn_WITH_ROW_NUMBER">
+        WITH EASsn_WITH_ROW_NUMBER AS (SELECT *,
+                                              ROW_NUMBER() OVER(PARTITION BY MacID  ORDER BY LoginDate DESC) AS row_number
+                                       FROM EASsn e)
+    </sql>
+
+    <sql id="RX_DEVICE">
+        and mac.MacName like '%${@org.kexing.management.domin.util.ErpDeviceUtil@RX_DEVICE_NAME_CONTAIN_CONTAIN}%'
+    </sql>
+    <sql id="HX_DEVICE_ID_NOT_CONTAIN">
+        mac.MacID  not in
+        <foreach item="item" collection="hxDeviceIdNotContain" separator="," open="(" close=")">
+            #{item}
+        </foreach>
+    </sql>
+    <select id="selectListErpDevice"
+            resultType="org.kexing.management.infrastruction.query.dto.sql_server.ListErpDeviceResponse">
+        select mac.macid deviceId,
+        mac.MacName deviceName,
+        mac.MacSpec deviceSpec,
+        mac.Location location,
+        eaMac.RunName deviceStatus,
+        eaMac.RunID deviceStatusId
+        from MAMac mac
+        left join EAMac eaMac on mac.MacID = eaMac.MacID
+        <where>
+            <if test="listErpDeviceRequest!=null">
+                <choose>
+                    <when test="listErpDeviceRequest.erpDeviceType==@org.kexing.management.domin.util.ErpDeviceUtil$ErpDeviceType@HX">
+                        and <include refid="HX_DEVICE_ID_NOT_CONTAIN"/>
+                        and (mac.macid like '${@org.kexing.management.domin.util.ErpDeviceUtil@HONGXIANG_ID_PRE}%')
+                    </when>
+                    <when test="listErpDeviceRequest.erpDeviceType==@org.kexing.management.domin.util.ErpDeviceUtil$ErpDeviceType@JZ">
+                        and mac.MacName in
+                        <foreach item="item" collection="queryMacNameList" separator="," open="(" close=")">
+                            #{item}
+                        </foreach>
+                    </when>
+                    <when test="listErpDeviceRequest.erpDeviceType==@org.kexing.management.domin.util.ErpDeviceUtil$ErpDeviceType@RX">
+                        <include refid="RX_DEVICE"/>
+                    </when>
+                </choose>
+                <if test="listErpDeviceRequest.searchField !=null and listErpDeviceRequest.searchField!=''">
+                    and (mac.macid=#{listErpDeviceRequest.searchField}
+                    or
+                    mac.MacSpec =#{listErpDeviceRequest.searchField}
+                    or
+                    mac.MacName like
+                    '%'+#{listErpDeviceRequest.searchField}+'%')
+                </if>
+            </if>
+        </where>
+    </select>
+    <select id="selectErpDevice"
+            resultType="org.kexing.management.infrastruction.query.dto.sql_server.GetErpDeviceResponse">
+        <include refid="EASsn_WITH_ROW_NUMBER"/>
+        select mac.macid     deviceId,
+               mac.MacName   deviceName,
+               mac.MacSpec   deviceSpec,
+               mac.Location  location,
+               eaMac.RunName    deviceStatus,
+               esprd.WipCode productNumber,
+               esprd.BaseEntry productOrderNo,
+               esprdA.PrcID prcId,
+               esprdA.PrcName processName,
+               esprd.ItmID materialId,
+               esprd.ItmName productName,
+               esprd.ItmSpec productModel,
+               eassnRn.EmpName    producerName,
+               esprdA.RealSTime startProductionTime,
+               esprdA.RealSDate startProductionDateTime
+        from MAMac mac
+                 left join EAMac eaMac on mac.MacID = eaMac.MacID
+                 left join EAMacA eaMacA on mac.MacID = eaMacA.MacID
+                 left join EASsn_WITH_ROW_NUMBER eassnRn on mac.MacId = eassnRn.MacId and  eassnRn.row_number=1
+                 left join ESPrd esprd on esprd.DocEntry = eaMacA.BaseEntry and eaMacA.BaseType = esprd.ObjType
+                 left join ESPrdA esprdA on esprd.DocEntry = esprdA.DocEntry and eaMacA.BaseLineNum = esprdA.LineNum
+        where mac.macid = #{deviceId}
+    </select>
+    <select id="selectListErpDeviceProductRecord"
+            resultType="org.kexing.management.infrastruction.query.dto.sql_server.ListErpDeviceProductRecordResponse">
+        select esprd.WipCode productNumber,
+        esprd.BaseEntry productOrderNo,
+        tml.CrdName customerName,
+        esprd.ItmName productName,
+        esprd.DocEntry orderProductId,
+        esprd.ItmSpec productModel,
+        esprda.RealSDate startProductionDateTime,
+        esprda.RealSTime startProductionTime,
+        esprda.PinEmpName producerName,
+        esprd.NumAtCrd referenceNo
+        from ESPrdA esprda
+        left join ESPrd esprd on esprda.WipCode = esprd.WipCode
+        left join MMOrdF td on td.DocEntry = esprd.BaseEntry
+        left join SAOrdA tdl
+        on td.BaseType = tdl.ObjType and td.BaseEntry = tdl.DocEntry and td.BaseLineNum = tdl.LineNum
+        left join SAOrd tml on tdl.DocEntry = tml.DocEntry
+        <where>
+            and esprda.MacID=#{deviceId}
+            <if test="listDeviceProductRecordRequest!=null">
+                <if test="listDeviceProductRecordRequest.dateRange !=null">
+                    <if test="listDeviceProductRecordRequest.dateRange[0]!=null">
+                        and esprda.RealSDate >= #{listDeviceProductRecordRequest.dateRange[0]}
+                    </if>
+                    <if test="listDeviceProductRecordRequest.dateRange[1]!=null">
+                        <![CDATA[
+                               and  esprda.RealSDate < DATEADD(day ,1,#{listDeviceProductRecordRequest.dateRange[1]})
+                                ]]>
+                    </if>
+                    </if>
+                <if test="listDeviceProductRecordRequest.searchField !=null and listDeviceProductRecordRequest.searchField!=''">
+                    and (CAST(esprd.BaseEntry AS varchar)=#{listDeviceProductRecordRequest.searchField}
+                    or
+                    tml.CrdName=#{listDeviceProductRecordRequest.searchField}
+                    or
+                    esprd.WipCode=#{listDeviceProductRecordRequest.searchField} )
+                </if>
+            </if>
+        </where>
+        order by esprda.RealSDate desc,esprda.RealSTime desc,esprda.DocEntry,esprda.LineNum
+    </select>
+    <select id="selectCraftMaterial"
+            resultType="org.kexing.management.infrastruction.query.dto.sql_server.MeterialResponse">
+        SELECT TD2.ItmID materialId,TD2.ItmName materialName,TD2.ItmSpec materialSpec
+        FROM  ESPrd TM
+        JOIN ESPrdA TD ON TM.DocEntry=TD.DocEntry
+        JOIN  MDBomB TD1 ON ISNULL(TM.VBomEntry,TM.BomEntry)=TD1.DocEntry AND TD.PrcID=TD1.PrcID
+        JOIN  MDBomA TD2 ON TD1.DocEntry=TD2.DocEntry AND TD1.LineNum=TD2.OperationLine
+        WHERE TM.WipCode=#{productNumber} AND TD.PrcID=#{prcId}
+    </select>
+</mapper>

@@ -1,0 +1,102 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="org.kexing.management.infrastruction.repository.mybatis.mysql.UserAccountQueryMapper">
+    <sql id="userAccount_not_deleted">ua.deleted =false</sql>
+    <sql id="staff_not_deleted">s.deleted =false</sql>
+    <sql id="member_not_deleted">m.deleted =false</sql>
+    <resultMap autoMapping="true" id="selectUserAccountAppendStaffAndOrganizationResultMap"
+               type="org.kexing.management.domin.model.mysql.UserAccount">
+        <association autoMapping="true" property="staff" columnPrefix="s_"
+                     javaType="com.yunmo.attendance.api.entity.Staff">
+        </association>
+        <association autoMapping="true" property="organization" columnPrefix="o_"
+                     javaType="com.yunmo.attendance.api.entity.Organization">
+        </association>
+    </resultMap>
+    <sql id="userAccountAppendStaffAndOrganization">
+        select ua.id,
+               ua.created_by,
+               ua.created_date,
+               ua.last_modified_by,
+               ua.last_modified_date,
+               ua.account_name,
+               ua.staff_id,
+               ua.enabled,
+               ua.password,
+               ua.permission_conf,
+               ua.phone,
+               ua.people_broke_into_allow,
+               s.id                 as s_id,
+               s.created_by         as s_created_by,
+               s.created_date       as s_created_date,
+               s.last_modified_by   as s_last_modified_by,
+               s.last_modified_date as s_last_modified_date,
+               s.name               as s_name,
+               s.phone              as s_phone,
+               s.avatar             as s_avatar,
+               s.emp_id             as s_emp_id,
+               o.id                 as o_id,
+               o.created_by         as o_created_by,
+               o.created_date       as o_created_date,
+               o.last_modified_by   as o_last_modified_by,
+               o.last_modified_date as o_last_modified_date,
+               o.name               as o_name,
+               o.parent_id          as o_parent_id,
+               o.op_date            as o_op_date
+        from user_account ua
+                 left join member m on ua.staff_id = m.staff_id and <include refid="member_not_deleted"/>
+                 left join staff s on m.staff_id = s.id and <include refid="staff_not_deleted"/>
+                 left join organization o on m.organization_id = o.id
+    </sql>
+    <select id="selectListUserAccountRequestPage" resultMap="selectUserAccountAppendStaffAndOrganizationResultMap">
+        <include refid="userAccountAppendStaffAndOrganization"/>
+        <where>
+            and <include refid="userAccount_not_deleted"/>
+            <if test="listUserAccountRequest!=null">
+                <if test="listUserAccountRequest.staffId!=null">
+                    and ua.staff_id = #{listUserAccountRequest.staffId}
+                </if>
+                <if test="listUserAccountRequest.organizationId!=null and listUserAccountRequest.organizationId!=''">
+                    and o.id=#{listUserAccountRequest.organizationId}
+                </if>
+                <if test="listUserAccountRequest.enabled!=null">
+                    and ua.enabled = #{listUserAccountRequest.enabled}
+                </if>
+                <if test="listUserAccountRequest.searchField!=null and listUserAccountRequest.searchField!=''">
+                    and (ua.account_name = #{listUserAccountRequest.searchField} or
+                    s.name like '%${listUserAccountRequest.searchField}%' or
+                    s.emp_id = #{listUserAccountRequest.searchField} or
+                    s.phone = #{listUserAccountRequest.searchField}
+                    )
+                </if>
+            </if>
+        </where>
+        order by ua.created_date desc
+    </select>
+    <select id="selectUserAccountAppendStaffAndOrganization"
+            resultMap="selectUserAccountAppendStaffAndOrganizationResultMap">
+        <include refid="userAccountAppendStaffAndOrganization"/>
+        where ua.id=#{userAccountId} and <include refid="userAccount_not_deleted"/>
+    </select>
+    <select id="selectUserAccountIdAndStaffName"
+            resultType="org.kexing.management.infrastruction.query.dto.ListUserAccountIdAndStaffName">
+        select ua.id userAccountId, s.name userAccountStaffName,ua.enabled
+        from user_account ua
+        left join staff s on ua.staff_id = s.id
+        <where>
+            and <include refid="userAccount_not_deleted"/>
+            and <include refid="staff_not_deleted"/>
+            <if test="enabled!=null">
+                and ua.enabled =#{enabled}
+            </if>
+            <if test="userAccountIds!=null and userAccountIds.length > 0">
+                and ua.id in
+                <foreach collection="userAccountIds" close=")" item="id" open="(" separator=",">
+                    #{id}
+                </foreach>
+            </if>
+
+        </where>
+
+    </select>
+</mapper>

@@ -1,0 +1,17 @@
+plugins {
+    id 'java-application-conventions'
+}
+
+application {
+    mainClass = 'org.kexing.management.KeXingManagementApplication'
+}
+
+dependencies {
+    implementation project(':management-infrastruction')
+    implementation 'com.yunmo.boot:resource-server-starter'
+    implementation 'com.yunmo.boot:rest-server-starter'
+    implementation "com.yunmo.boot:genrpc-starter"
+
+
+    testImplementation 'org.springframework.boot:spring-boot-starter-test'
+}

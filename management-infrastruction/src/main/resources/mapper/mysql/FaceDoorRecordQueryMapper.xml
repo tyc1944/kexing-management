@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="org.kexing.management.infrastruction.repository.mybatis.mysql.FaceDoorRecordQueryMapper">
+
+    <select id="selectListFaceDoorRecord" resultType="org.kexing.management.infrastruction.query.dto.FaceDoorRecordResponse">
+        select fdr.id,fdr.abnormal_temperature,fdr.face_temperature,fdr.temperature_unit,fdr.created_date,fdr.device_id,fdr.staff_id,
+               json_unquote(json_extract(d.config,'$.content.location')) location,o.name organization_name ,o.id organization_id,s.emp_id,s.name staff_name
+        from face_door_record fdr
+        left join `iot-core`.device d on fdr.device_id=d.id
+        left join staff s on fdr.staff_id=s.id
+        left join organization o on o.id=fdr.organization_id
+        <where>
+            <if test="listFaceDoorRecordRequest.staffId!=null">
+                and fdr.staff_id=#{listFaceDoorRecordRequest.staffId}
+            </if>
+            <if test="listFaceDoorRecordRequest.abnormalTemperature!=null">
+                and fdr.abnormal_temperature=#{listFaceDoorRecordRequest.abnormalTemperature}
+            </if>
+            <if test="listFaceDoorRecordRequest.deviceId!=null">
+                and fdr.device_id=#{listFaceDoorRecordRequest.deviceId}
+            </if>
+            <if test="listFaceDoorRecordRequest.organizationId!=null and listFaceDoorRecordRequest.organizationId!=''">
+                and o.id =#{listFaceDoorRecordRequest.organizationId}
+            </if>
+            <if test="listFaceDoorRecordRequest.dateRange !=null and listFaceDoorRecordRequest.dateRange.length>0">
+             and fdr.created_date >= #{listFaceDoorRecordRequest.dateRange[0]}
+                <![CDATA[
+                   and  fdr.created_date < #{listFaceDoorRecordRequest.dateRange[1]} + INTERVAL 1 DAY
+                ]]>
+            </if>
+            <if test="listFaceDoorRecordRequest.searchField !=null">
+                and (
+                s.emp_id like '%${listFaceDoorRecordRequest.searchField}%'
+                or
+                s.name like '%${listFaceDoorRecordRequest.searchField}%'
+                )
+            </if>
+        </where>
+        order by fdr.created_date desc
+    </select>
+</mapper>

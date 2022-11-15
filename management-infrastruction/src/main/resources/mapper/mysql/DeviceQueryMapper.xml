@@ -1,0 +1,108 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="org.kexing.management.infrastruction.repository.mybatis.mysql.DeviceQueryMapper">
+
+    <resultMap id="baseResult" type="org.kexing.management.infrastruction.query.dto.IotDeviceWrap">
+        <id property="id" column="id"/>
+        <result property="attributes"
+                javaType="java.util.Map"
+                column="attributes"
+                jdbcType="VARCHAR"
+                typeHandler="org.kexing.management.infrastruction.FastJsonTypeHandler"/>
+    </resultMap>
+
+    <resultMap id="deviceNameAndLocationResultMap"
+               type="org.kexing.management.infrastruction.query.dto.DeviceNameAndAttributesResponse">
+        <id property="deviceId" column="id"/>
+        <result property="attributes"
+                javaType="java.util.Map"
+                column="attributes"
+                jdbcType="VARCHAR"
+                typeHandler="org.kexing.management.infrastruction.FastJsonTypeHandler"/>
+    </resultMap>
+
+    <sql id="iotDeviceNoDeleted">
+      and  d.deleted =false
+    </sql>
+
+    <select id="selectListDeviceRequestPage" resultMap="baseResult">
+        select * from `iot-core`.device d
+        <where>
+            <include refid="iotDeviceNoDeleted"/>
+            <if test="listDeviceRequest.deviceType!=null">
+                and json_extract(attributes,'$.deviceType')=#{listDeviceRequest.deviceType}
+            </if>
+            <if test="listDeviceRequest.projectId!=null">
+                and project_id=#{listDeviceRequest.projectId}
+            </if>
+            <if test="listDeviceRequest.deviceStatus!=null">
+                and device_status=#{listDeviceRequest.deviceStatus}
+            </if>
+            <if test="listDeviceRequest.deviceType=='door_face' and listDeviceRequest.doorFaceMap==true">
+                and json_extract(attributes,'$.deviceType')=#{listDeviceRequest.deviceType} and
+                json_extract(attributes,'$.type')='in'
+            </if>
+            <if test="listDeviceRequest.searchField !=null">
+                and (
+                d.id like '%${listDeviceRequest.searchField}%'
+                or
+                json_extract(attributes,'$.name') like '%${listDeviceRequest.searchField}%'
+                or
+                json_extract(attributes,'$.deviceNo') like '%${listDeviceRequest.searchField}%'
+                or
+                json_extract(attributes,'$.deviceSpec') like '%${listDeviceRequest.searchField}%'
+                )
+            </if>
+        </where>
+        order by created_date desc
+    </select>
+    <sql id="shareDeviceNameAndLocationSql">
+        select d.id, d.attributes
+        from `iot-core`.device d
+        <where>
+           <include refid="iotDeviceNoDeleted"/>
+        </where>
+    </sql>
+    <select id="selectAllDevice"
+            resultMap="deviceNameAndLocationResultMap">
+        <include refid="shareDeviceNameAndLocationSql"/>
+    </select>
+
+    <select id="selectByDeviceId"
+            resultMap="deviceNameAndLocationResultMap">
+        <include refid="shareDeviceNameAndLocationSql"/>
+        <if test="deviceId!=null">
+            and d.id =#{deviceId}
+        </if>
+    </select>
+    <select id="selectOnlineAndOfflineStatisticsByDeviceType"
+            resultType="org.kexing.management.infrastruction.query.dto.statistics.IotDeviceStatusStatisticsResponse">
+        select (select count(*)
+        from `iot-core`.device d
+        <where>
+            <include refid="iotDeviceNoDeleted"/>
+            and json_extract(d.attributes, '$.deviceType') = #{sourceType}
+            and d.device_status = '${@com.yunmo.iot.domain.core.DeviceConnectionStatus@ONLINE}'
+        </where>
+        ) as numOfOnline,
+        (select count(*)
+        from `iot-core`.device d
+        <where>
+            <include refid="iotDeviceNoDeleted"/>
+            and json_extract(d.attributes, '$.deviceType') = #{sourceType}
+            and (d.device_status = '${@com.yunmo.iot.domain.core.DeviceConnectionStatus@OFFLINE}' or d.device_status = '${@com.yunmo.iot.domain.core.DeviceConnectionStatus@INACTIVE}')
+        </where>
+        ) as numOfOffline
+    </select>
+
+    <select id="getParentByCameraDeviceId" resultType="com.yunmo.iot.domain.core.Device">
+        select d_parent.* from `iot-core`.device d left join `iot-core`.asset_entity an on d.id=an.device_id
+        left join `iot-core`.asset_entity an_parent on an_parent.id=an.parent_id
+        left join `iot-core`.device d_parent on an_parent.device_id=d_parent.id
+        where json_extract(d_parent.attributes,'$.deviceType')=#{deviceType} and d.id=#{id}
+    </select>
+
+    <select id="getDeviceListNotAttributes" resultMap="deviceNameAndLocationResultMap">
+        select attributes from `iot-core`.device where attributes is not null
+    </select>
+</mapper>

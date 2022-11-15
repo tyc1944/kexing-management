@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="org.kexing.management.infrastruction.repository.mybatis.mysql.HongXiangExceptionReportedRecordQueryMapper">
+    <resultMap id="baseResult" type="org.kexing.management.domin.model.mysql.HongXiangExceptionReportedRecord">
+        <id property="id" column="id"/>
+        <result property="hongXiangDeviceConfig"
+                javaType="org.kexing.management.domin.model.mysql.ErpDeviceConfig$HongXiangDeviceConfig"
+                column="hong_xiang_device_config"
+                typeHandler="org.kexing.management.infrastruction.FastJsonTypeHandler"/>
+    </resultMap>
+
+    <select id="selectListHongXiangExceptionReportedRecordRequestPage"
+            resultMap="baseResult">
+        select *
+        from hong_xiang_exception_reported_record hxerr
+        <where>
+            and hxerr.device_id =#{deviceId}
+            <if test="listHongXiangExceptionReportedRecordRequest!=null">
+                <if test="listHongXiangExceptionReportedRecordRequest.dateRange !=null and listHongXiangExceptionReportedRecordRequest.dateRange.length>0">
+                    and hxerr.upload_date_time >= #{listHongXiangExceptionReportedRecordRequest.dateRange[0]}
+                    <![CDATA[
+                               and  hxerr.upload_date_time < #{listHongXiangExceptionReportedRecordRequest.dateRange[1]} + INTERVAL 1 DAY
+                                ]]>
+                </if>
+            </if>
+        </where>
+        order by hxerr.upload_date_time desc
+    </select>
+</mapper>

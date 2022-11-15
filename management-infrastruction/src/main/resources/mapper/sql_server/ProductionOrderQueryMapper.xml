@@ -1,0 +1,135 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="org.kexing.management.infrastruction.repository.mybatis.sql_server.ProductionOrderQueryMapper">
+    <sql id="shareSelectProductOrderColumn">
+        select Tm.DocEntry productOrderNo,
+               Tm.NumAtCrd referenceNo,
+               TMl.CrdName customerName,
+               Tm.docdate  planProductTime,
+               Tm.qty      productNum,
+               Tm.BomID    bomId
+    </sql>
+    <sql id="shareJoinProductOrderTable">
+        from MMOrd Tm
+        left join
+        MMOrdF TD on Tm.DocEntry = TD.DocEntry
+        left join SAOrdA TDl on TD.BaseType = TDl.ObjType
+        and TD.BaseEntry = TDL.DocEntry and TD.BaseLineNum = TDl.LineNum
+        left join SAOrd TMl on TDl.DocEntry = TMl.DocEntry
+    </sql>
+    <select id="selectProductOrders"
+            resultType="org.kexing.management.infrastruction.query.dto.sql_server.ListProductionOrderResponse">
+        <include refid="shareSelectProductOrderColumn"/>
+        <include refid="shareJoinProductOrderTable"/>
+        <where>
+            <if test="listProductOrderRequest!=null">
+                <if test="listProductOrderRequest.dateRange !=null and listProductOrderRequest.dateRange.length>0">
+                    and Tm.docdate >= #{listProductOrderRequest.dateRange[0]}
+                    <![CDATA[
+                               and  Tm.docdate < DATEADD(day ,1,#{listProductOrderRequest.dateRange[1]})
+                                ]]>
+                </if>
+                <if test="listProductOrderRequest.searchField !=null and listProductOrderRequest.searchField !=''">
+                    and (CAST(Tm.docentry AS varchar)=#{listProductOrderRequest.searchField} or TMl.CrdName like
+                    '%'+#{listProductOrderRequest.searchField}+'%' or Tm.NumAtCrd =#{listProductOrderRequest.searchField})
+                </if>
+            </if>
+        </where>
+        order by Tm.docdate desc,Tm.docentry desc
+    </select>
+
+    <select id="selectProductionOrderByProductOrderNo"
+            resultType="org.kexing.management.infrastruction.query.dto.sql_server.ProductionOrderResponse">
+        <include refid="shareSelectProductOrderColumn"/>,  Tm.reqdate deliveryDateTime
+        <include refid="shareJoinProductOrderTable"/>
+        where Tm.DocEntry=#{productionOrderNo}
+    </select>
+
+    <sql id="shareProductionOrderProductSelectColumn">
+        select esprd.WipCode  productNumber,
+               esprd.ItmName  productName,
+               esprd.itmspec  productModel,
+               esprd.realdate startProductionDateTime,
+               esprd.RealTime startProductionTime,
+               esprd.DocEntry orderProductId
+    </sql>
+    <select id="selectProductionOrderProducts"
+            resultType="org.kexing.management.infrastruction.query.dto.sql_server.ListProductionOrderProductResponse">
+        <include refid="shareProductionOrderProductSelectColumn"/>
+        from ESPrd esprd
+        <where>
+            and esprd.BaseEntry = #{productionOrderNo}
+            <if test="listProductionOrderProductRequest!=null">
+                <if test="listProductionOrderProductRequest.dateRange !=null and listProductionOrderProductRequest.dateRange.length>0">
+                    and esprd.realdate >= #{listProductionOrderProductRequest.dateRange[0]}
+                    <![CDATA[
+                               and  esprd.realdate < DATEADD(day ,1,#{listProductionOrderProductRequest.dateRange[1]})
+                                ]]>
+                </if>
+                <if test="listProductionOrderProductRequest.searchField !=null and listProductionOrderProductRequest.searchField!=''">
+                    and (esprd.WipCode=#{listProductionOrderProductRequest.searchField}
+                    or
+                    esprd.itmspec=#{listProductionOrderProductRequest.searchField}
+                    or
+                    esprd.ItmName like '%'+#{listProductionOrderProductRequest.searchField}+'%' escape '${escapeChar}')
+                </if>
+            </if>
+        </where>
+        order by esprd.realdate desc,esprd.docentry desc
+
+    </select>
+    <select id="getProductionOrderProduct"
+            resultType="org.kexing.management.infrastruction.query.dto.sql_server.ProductionOrderProductResponse">
+        <include refid="shareProductionOrderProductSelectColumn"/>,esprd.finisheddate
+        endProductionDateTime,esprd.FinishedTime endProductionTime
+        ,esprd.FinishedTime endProductionTime
+        from ESPrd esprd
+        where esprd.BaseEntry = #{productionOrderNo} and esprd.DocEntry =#{productId}
+    </select>
+    <select id="getProductionOrderProductCrafts"
+            resultType="org.kexing.management.infrastruction.query.dto.sql_server.ListProductionOrderProductCraftResponse">
+        select esprdA.PrcName processName,
+               PinEmpName   producerName,
+               RealSDate startProductionDateTime,
+               RealSTime startProductionTime,
+               RealEDate endProductionDateTime,
+               RealETime endProductionTime,
+               DocEntry     orderProductId,
+               LineNum      lineNum,
+               MacID        deviceId
+        from ESPrdA esprdA
+        where esprdA.docentry = #{productId}
+          and esprdA.LineNum = #{lineNum}
+    </select>
+    <select id="selectProductionOrderProductCrafts"
+            resultType="org.kexing.management.infrastruction.query.dto.sql_server.ListProductionOrderProductCraftResponse">
+        select esprdA.PrcName processName,
+        PinEmpName producerName,
+        RealSDate startProductionDateTime,
+        RealSTime startProductionTime,
+        RealEDate endProductionDateTime,
+        RealETime endProductionTime,
+        DocEntry orderProductId,
+        LineNum lineNum,
+        MacID deviceId
+        from ESPrdA  esprdA
+        <where>
+            and esprdA.docentry=#{productId}
+            <if test="listProductionOrderProductCraftRequest!=null">
+                <if test="listProductionOrderProductCraftRequest.dateRange !=null and listProductionOrderProductCraftRequest.dateRange.length>0">
+                    and esprdA.PinDate >= #{listProductionOrderProductCraftRequest.dateRange[0]}
+                    <![CDATA[
+                               and  esprdA.PinDate < DATEADD(day ,1,#{listProductionOrderProductCraftRequest.dateRange[1]})
+                                ]]>
+                </if>
+                <if test="listProductionOrderProductCraftRequest.searchField !=null and listProductionOrderProductCraftRequest.searchField!=''">
+                    and (esprdA.PrcName=#{listProductionOrderProductCraftRequest.searchField}
+                    or
+                    esprdA.pinEmpName like
+                    '%'+#{listProductionOrderProductCraftRequest.searchField}+'%')
+                </if>
+            </if>
+        </where>
+        order by esprdA.lineNum
+    </select>
+</mapper>

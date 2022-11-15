@@ -1,0 +1,23 @@
+plugins {
+    id 'java-library-conventions'
+    id 'com.google.protobuf'
+}
+
+apply from: '../gradle/grpc.gradle'
+apply from: '../gradle/publish.gradle'
+
+dependencies {
+    annotationProcessor "io.genrpc:genrpc-processor"
+    api "io.genrpc:genrpc-runtime"
+    api "com.yunmo:domain-commons"
+    api 'com.auth0:java-jwt'
+    api "com.yunmo.boot:resource-server-starter"
+    implementation "javax.annotation:javax.annotation-api"
+    implementation "org.bouncycastle:bcprov-jdk15on:$bcprovJdk15on"
+    testImplementation "io.grpc:grpc-all"
+    api "org.springframework:spring-context"
+    api "com.yunmo.attendance:attendance-api:$attendanceApi"
+    api ("com.yunmo.haikang:device-api:$haikangDeviceApi"){
+        exclude group: "org.eclipse.paho",module: "org.eclipse.paho.client.mqttv3"
+    }
+}

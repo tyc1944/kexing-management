@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="org.kexing.management.infrastruction.repository.mybatis.mysql.RobotPatrolLineQueryMapper">
+
+    <resultMap id="BaseResultMap" type="org.kexing.management.domin.model.mysql.robot.RobotPatrolLine">
+        <id property="id" column="id" jdbcType="BIGINT"/>
+        <result property="areaPoints" column="area_points" jdbcType="OTHER" typeHandler="org.kexing.management.infrastruction.FastJsonTypeHandler"/>
+    </resultMap>
+    <select id="findByRobotId" resultMap="BaseResultMap">
+        select * from robot_patrol_line
+        <where>
+            <if test="patrolType=='REPEAT_INSPECTION'">
+                id not in (select robot_patrol_line_id from patrol_rule where patrol_type='REPEAT_INSPECTION')
+            </if>
+            and robot_id=#{robotId}
+        </where>
+    </select>
+    <select id="findById" resultMap="BaseResultMap">
+        select * from robot_patrol_line
+        where id=#{id}
+    </select>
+</mapper>

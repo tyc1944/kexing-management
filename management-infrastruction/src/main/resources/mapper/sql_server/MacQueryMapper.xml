@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="org.kexing.management.infrastruction.repository.mybatis.sql_server.MacQueryMapper">
+    <sql id="shareSelectMacsSql">
+        select T.MacID    deviceId,
+               T.MacName  deviceName,
+               T.Location location,
+               'ERP'      source
+        from MAMac T
+    </sql>
+    <select id="selectMacs"
+            resultType="org.kexing.management.infrastruction.query.dto.ErpDeviceResponse">
+        <include refid="shareSelectMacsSql"/>
+    </select>
+    <select id="selectByMacId"
+            resultType="org.kexing.management.infrastruction.query.dto.ErpDeviceResponse">
+        <include refid="shareSelectMacsSql"/>
+        <where>
+            <if test="macId!=null">
+                and T.MacID =#{macId}
+            </if>
+        </where>
+
+    </select>
+    <select id="selectByMacNames" resultType="org.kexing.management.infrastruction.query.dto.ErpDeviceResponse">
+        <include refid="shareSelectMacsSql"/>
+        <where>
+            <if test="macNames!=null">
+                and T.MacName  in
+                <foreach collection="macNames" item="macName" separator="," open="(" close =")">
+                    #{macName}
+                </foreach>
+            </if>
+        </where>
+    </select>
+</mapper>

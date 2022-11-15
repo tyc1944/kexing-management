@@ -1,0 +1,34 @@
+spring:
+  quartz:
+    jdbc:
+      schema: classpath:quatz-init.sql
+      initialize-schema: always
+    job-store-type: jdbc
+  profiles:
+    active: dev
+  devtools:
+    restart:
+      enabled: true
+  jpa:
+    show-sql: true
+    open-in-view: false
+
+mybatis-plus:
+  configuration:
+    #    log-impl: org.apache.ibatis.logging.stdout.StdOutImpl
+    map-underscore-to-camel-case: true
+    cache-enabled: false
+
+wechat:
+  host: https://api.weixin.qq.com
+  appid: wx41af2b07812e0cb7
+  secret: c6d297f4ac0b34211249cb1c0ac98214
+  token: 2y4fg4oht33t1te
+  EncodingAESKey: lKhdBDHF9uz0OELev52OGGEUwyD1U14bv8sP7Z1X46y
+  assignWorkOrderMessageTemplate: zKWyoaEkJkYyaBU7cMMnZryeMGeXje1hAY8-j4tCBls
+  name: 科兴数字工厂
+
+mqtt:
+  topic:
+    deviceCommands: devices/{id}/commands
+    deviceConfig: devices/{id}/config

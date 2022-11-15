@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="org.kexing.management.infrastruction.repository.mybatis.sql_server.WarehouseQueryMapper">
+
+    <select id="selectWarehouseList" resultType="org.kexing.management.infrastruction.query.dto.sql_server.Warehouse">
+        select * from MDWhs
+    </select>
+
+</mapper>

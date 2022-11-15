@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="org.kexing.management.infrastruction.repository.mybatis.mysql.IotDeviceQueryMapper">
+    <resultMap id="iotDeviceResult" autoMapping="true"
+    type="com.yunmo.iot.domain.core.Device">
+        <result property="attributes"
+                javaType="java.util.Map"
+                column="attributes"
+                jdbcType="VARCHAR"
+                typeHandler="org.kexing.management.infrastruction.FastJsonTypeHandler"/>
+    </resultMap>
+    <select id="selectByDeviceId"
+            resultMap="iotDeviceResult">
+        select * from `iot-core`.device where id=#{id}
+    </select>
+</mapper>

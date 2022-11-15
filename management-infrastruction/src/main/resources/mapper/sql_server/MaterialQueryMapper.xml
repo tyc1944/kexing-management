@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="org.kexing.management.infrastruction.repository.mybatis.sql_server.MaterialQueryMapper">
+
+    <resultMap autoMapping="true" id="BaseResultMap"
+               type="org.kexing.management.infrastruction.query.dto.sql_server.Material">
+    </resultMap>
+
+    <select id="selectListMaterialPage" resultMap="BaseResultMap">
+        select MI.ItmID ,
+        MI.ItmName,
+        MI.ItmSpec,
+        BC.BatchNum,
+        MD.WhsName,
+        BC.OnHand,
+        BC.OnOccupy,
+        BC.InDate,
+        BC.InvalidDate,
+        BC.LastDateIn,
+        BC.LastDateOut
+        from BCIbt BC
+        left join MDItm MI on BC.ItmID = MI.ItmID
+        left join MDWhs MD on MD.WhsID = BC.WhsID
+        <where>
+            and BC.LastDateIn is not null
+            <if test="listMaterialRequest.warehouseId != null">
+                and BC.WhsID =#{listMaterialRequest.warehouseId}
+            </if>
+            <if test="listMaterialRequest.dateRange!=null and listMaterialRequest.dateRange.length>0">
+                and BC.LastDateIn >= #{listMaterialRequest.dateRange[0]}
+                <![CDATA[
+                               and  BC.LastDateIn < DATEADD(day,1,#{listMaterialRequest.dateRange[1]})
+                                ]]>
+            </if>
+            <if test="listMaterialRequest.searchField!=null and listMaterialRequest.searchField!=''">
+                and (MI.ItmID =#{listMaterialRequest.searchField} or MI.ItmName=#{listMaterialRequest.searchField} or
+                BC.BatchNum =#{listMaterialRequest.searchField})
+            </if>
+        </where>
+        order by BC.LastDateIn desc,BC.StockKey
+    </select>
+</mapper>

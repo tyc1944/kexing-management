@@ -1,0 +1,97 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="org.kexing.management.infrastruction.repository.mybatis.mysql.WorkOrderQueryMapper">
+    <resultMap id="listWorOrderMap" autoMapping="true"
+               type="org.kexing.management.infrastruction.query.dto.ListWorkOrderResponse">
+        <association property="workOrder" autoMapping="true" columnPrefix="w_">
+            <result property="attributes"
+                    javaType="java.util.Map"
+                    column="attributes"
+                    jdbcType="VARCHAR"
+                    typeHandler="org.kexing.management.infrastruction.FastJsonTypeHandler"/>
+        </association>
+    </resultMap>
+    <sql id="listWorkOrderMapSelectShare">
+        w.id w_id,
+        w.created_by w_created_by,
+        w.created_date w_created_date,
+        w.last_modified_by w_last_modified_by,
+        w.last_modified_date w_last_modified_date,
+        w.assign_date_time w_assign_date_time,
+        w.create_work_order_attachment w_create_work_order_attachment,
+        w.device_id w_device_id,
+        w.expect_handle_date_time w_expect_handle_date_time,
+        w.handle_feed_back w_handle_feed_back,
+        w.handle_process w_handle_process,
+        w.immediate_processing w_immediate_processing,
+        w.problem_description w_problem_description,
+        w.process_area w_process_area,
+        w.processed_date_time w_processed_date_time,
+        w.processor_user_account_id w_processor_user_account_id,
+        w.remark w_remark,
+        w.start_processing_date_time w_start_processing_date_time,
+        w.type w_type,
+        w.no w_no,
+        w.status w_status,
+        w.close_reason w_close_reason,
+        w.close_time w_close_time,
+        w.attributes w_attributes,
+        w.confirm_finish_date_time w_confirm_finish_date_time,
+        w.confirm_finish_user_account_id w_confirm_finish_user_account_id
+    </sql>
+    <sql id="listWorkOrderMapWhereShare">
+        <if test="listWorkOrderRequest.type !=null">
+            and w.type =#{listWorkOrderRequest.type}
+        </if>
+        <if test="listWorkOrderRequest.status !=null">
+            and w.status =#{listWorkOrderRequest.status}
+        </if>
+        <if test="listWorkOrderRequest.dateRange !=null and listWorkOrderRequest.dateRange.length>0">
+            and w.created_date >= #{listWorkOrderRequest.dateRange[0]}
+            <![CDATA[
+                               and  w.created_date < #{listWorkOrderRequest.dateRange[1]} + INTERVAL 1 DAY
+                                ]]>
+        </if>
+        <if test="listWorkOrderRequest.searchField !=null and listWorkOrderRequest.searchField!=''">
+            and (w.no=#{listWorkOrderRequest.searchField} or  s.name like '%${listWorkOrderRequest.searchField}%' )
+        </if>
+        <if test="listWorkOrderRequest.appletSearchField !=null and listWorkOrderRequest.appletSearchField!=''">
+            and (w.no=#{listWorkOrderRequest.appletSearchField})
+        </if>
+    </sql>
+    <select id="selectWorkOrders" resultMap="listWorOrderMap">
+        select
+        <include refid="listWorkOrderMapSelectShare"/>,
+        s.name processorStaffName
+        from work_order w
+        left join user_account u on w.processor_user_account_id = u.id
+        left join staff s on s.id = u.staff_id
+        <where>
+            <include refid="listWorkOrderMapWhereShare"/>
+            <if test="listWorkOrderRequest.processorUserAccountId !=null">
+                and w.processor_user_account_id=#{listWorkOrderRequest.processorUserAccountId}
+            </if>
+            <if test="listWorkOrderRequest.deviceId !=null">
+                and w.device_id=#{listWorkOrderRequest.deviceId}
+            </if>
+            <if test="listWorkOrderRequest.eventType !=null and listWorkOrderRequest.eventType!=''">
+                and json_extract(w.attributes,'$.event_type')=#{listWorkOrderRequest.eventType}
+            </if>
+            <if test="listWorkOrderRequest.no !=null and listWorkOrderRequest.no!=''">
+                and w.no=#{listWorkOrderRequest.no}
+            </if>
+        </where>
+        <choose>
+            <when test="listWorkOrderRequest.status !=null and listWorkOrderRequest.status==@org.kexing.management.domin.model.mysql.WorkOrder$Status@AWAITING_PROCESSING">
+                order by w.assign_date_time desc
+            </when>
+            <when test="listWorkOrderRequest.status !=null and listWorkOrderRequest.status==@org.kexing.management.domin.model.mysql.WorkOrder$Status@PROCESSING">
+                order by w.start_processing_date_time desc
+            </when>
+            <otherwise>
+                order by w.created_date desc
+            </otherwise>
+        </choose>
+
+    </select>
+</mapper>

@@ -1,0 +1,25 @@
+plugins {
+    id 'java-library-conventions'
+}
+
+dependencies {
+    api project(':management-domain')
+    api "com.baomidou:mybatis-plus-boot-starter:$mybatisPlusBootStarter"
+
+    implementation "com.yunmo.boot:data-starter"
+    implementation group: 'org.apache.httpcomponents', name: 'httpclient', version: "$apacheHttpcomponents"
+    api "org.springframework.boot:spring-boot-starter-data-redis"
+    api "org.redisson:redisson-spring-boot-starter:$springBootRedissonStarter"
+    implementation 'com.fasterxml.jackson.datatype:jackson-datatype-jsr310'
+    implementation "org.apache.pulsar:pulsar-client"
+    api "com.yunmo.iot:pipe-core:1.6.35"
+
+
+    implementation 'com.squareup.retrofit2:retrofit:2.9.0'
+    implementation 'com.squareup.retrofit2:converter-gson:2.9.0'
+    implementation 'com.squareup.retrofit2:converter-scalars:2.9.0'
+
+    api 'org.eclipse.paho:org.eclipse.paho.client.mqttv3:1.2.5'
+
+    api 'org.springframework.boot:spring-boot-starter-quartz'
+}

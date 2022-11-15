@@ -1,0 +1,94 @@
+spring:
+  devtools:
+    restart:
+      enabled: false
+  jpa:
+    properties:
+      hibernate:
+        implicit_naming_strategy: org.hibernate.boot.model.naming.ImplicitNamingStrategyComponentPathImpl
+        physical_naming_strategy: org.springframework.boot.orm.jpa.hibernate.SpringPhysicalNamingStrategy
+        enable_lazy_load_no_trans: true
+        dialect: org.hibernate.dialect.MySQL57Dialect
+        show-sql: true
+        hbm2ddl:
+          import_files: import.sql
+          auto: update
+      org:
+        hibernate:
+          envers:
+            audit_table_suffix: _audit_log
+
+  datasource:
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    jdbc-url: jdbc:mysql://iot-mysql.iot-test:3306/kexing_management?allowPublicKeyRetrieval=true&useSSL=false&autoReconnect=true
+    username: kexing_management
+    password: mlq9u9k3f0
+    hikari:
+      prepStmtCacheSize: 256
+      prepStmtCacheSqlLimit: 2048
+      connection-timeout: 100000
+  second-datasource:
+    driver-class-name: com.microsoft.sqlserver.jdbc.SQLServerDriver
+    jdbc-url: jdbc:sqlserver://192.168.100.101:1433;databaseName=AErp8_TX_KXDQ
+    username: sa
+    password: pushsoft@11
+    hikari:
+      prepStmtCacheSize: 256
+      prepStmtCacheSqlLimit: 2048
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          jwk-set-uri: http://kexing-oauth2-server.kexing-qa:8080/oauth2/jwks
+
+  redis:
+    database: 0
+    host: kexing-redis-master.kexing-qa
+    password: mlchiepukf
+    redisson:
+      singleServerConfig: |
+        idleConnectionTimeout: 10000
+        connectTimeout: 10000
+        timeout: 3000
+        retryAttempts: 3
+        retryInterval: 1500
+        subscriptionsPerConnection: 5
+        clientName: null
+        subscriptionConnectionMinimumIdleSize: 1
+        subscriptionConnectionPoolSize: 50
+        connectionMinimumIdleSize: 24
+        connectionPoolSize: 64
+        database: 0
+        dnsMonitoringInterval: 5000
+        threads: 16
+        nettyThreads: 32
+        codec: !<org.redisson.codec.MarshallingCodec> { }
+        transportMode: "NIO"
+
+logging:
+  level:
+    org:
+      springframework:
+        security: TRACE
+sms:
+  enable: true
+  yunpian:
+    host: https://sms.yunpian.com
+    apiKey: 327b14456f23e89485b53c3fe4d1b200
+
+grpc:
+  iot:
+    ip: 10.234.49.41
+  kexing:
+    haikangdevice:
+      ip: 10.234.31.244
+    attendance:
+      ip: 10.234.41.249
+
+pulsar-proxy:
+  iot:
+    ip: 10.234.13.45
+
+mqtt:
+  client:
+    uri: tcp://10.234.39.172:11883

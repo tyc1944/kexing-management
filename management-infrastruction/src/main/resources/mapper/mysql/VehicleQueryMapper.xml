@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="org.kexing.management.infrastruction.repository.mybatis.mysql.VehicleQueryMapper">
+
+    <select id="listVehicles" resultType="org.kexing.management.infrastruction.query.dto.VehicleResponse">
+        select v.id,v.plate_number,s.name,s.emp_id,s.phone,o.name organization_name,s.id staff_id
+        from vehicle v left join staff s on s.id=v.staff_id and <include refid="org.kexing.management.infrastruction.repository.mybatis.mysql.UserAccountQueryMapper.staff_not_deleted"/>
+        left join  member m on s.id=m.staff_id and <include refid="org.kexing.management.infrastruction.repository.mybatis.mysql.UserAccountQueryMapper.member_not_deleted"/>
+        left join organization o on m.organization_id=o.id
+        <where>
+            <if test="vehicleRequest.organizationId!=null and vehicleRequest.organizationId!=''">
+                and o.id=#{vehicleRequest.organizationId}
+            </if>
+            <if test="vehicleRequest.searchField!=null and vehicleRequest.searchField!=''">
+                and (
+                v.plate_number like '%${vehicleRequest.searchField}%'
+                or
+                s.name like '%${vehicleRequest.searchField}%'
+                or
+                s.emp_id like '%${vehicleRequest.searchField}%'
+                or
+                s.phone like '%${vehicleRequest.searchField}%'
+                )
+            </if>
+        </where>
+        order by v.created_date desc
+    </select>
+
+    <select id="selectById" resultType="org.kexing.management.infrastruction.query.dto.VehicleResponse">
+        select v.id,v.plate_number,s.name,s.emp_id,s.phone,o.name organization_name,s.id staff_id
+        from vehicle v left join staff s on s.id=v.staff_id and <include refid="org.kexing.management.infrastruction.repository.mybatis.mysql.UserAccountQueryMapper.staff_not_deleted"/>
+                       left join  member m on s.id=m.staff_id and <include refid="org.kexing.management.infrastruction.repository.mybatis.mysql.UserAccountQueryMapper.member_not_deleted"/>
+                       left join organization o on m.organization_id=o.id
+        where v.id=#{id}
+    </select>
+</mapper>

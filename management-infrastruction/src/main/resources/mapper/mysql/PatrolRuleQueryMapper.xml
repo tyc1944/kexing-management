@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="org.kexing.management.infrastruction.repository.mybatis.mysql.PatrolRuleQueryMapper">
+
+    <resultMap id="BaseResultMap" type="org.kexing.management.domin.model.mysql.robot.PatrolRule">
+        <id property="id" column="id" jdbcType="BIGINT"/>
+        <result property="createdBy" column="created_by" jdbcType="BIGINT"/>
+        <result property="createdDate" column="created_date" jdbcType="TIMESTAMP"/>
+        <result property="lastModifiedBy" column="last_modified_by" jdbcType="BIGINT"/>
+        <result property="lastModifiedDate" column="last_modified_date" jdbcType="TIMESTAMP"/>
+        <result property="taskId" column="task_id" jdbcType="VARCHAR"/>
+        <result property="taskName" column="task_name" jdbcType="VARCHAR"/>
+        <result property="patrolType" column="patrol_type" jdbcType="VARCHAR"/>
+        <result property="taskStartTime" column="task_start_time" jdbcType="OTHER" typeHandler="org.kexing.management.infrastruction.FastJsonTypeHandler"/>
+        <association property="robotPatrolLine" column="{id=robot_patrol_line_id}" select="org.kexing.management.infrastruction.repository.mybatis.mysql.RobotPatrolLineQueryMapper.findById"/>
+    </resultMap>
+    <select id="selectListPatrolPage" resultMap="BaseResultMap">
+        select *
+        from patrol_rule
+        <where>
+            <if test="listPatrolRequest.patrolType!=null">
+                and patrol_type =#{listPatrolRequest.patrolType}
+            </if>
+<!--            <if test="listPatrolRequest.dateRange!=null and listPatrolRequest.dateRange.length>0">-->
+<!--                and task_start_time >= #{listPatrolRequest.dateRange[0]}-->
+<!--                <![CDATA[-->
+<!--                               and  task_start_time < #{listPatrolRequest.dateRange[1]} + INTERVAL 1 DAY-->
+<!--                                ]]>-->
+<!--            </if>-->
+<!--            <if test="listPatrolRequest.searchField!=null and listPatrolRequest.searchField!=''">-->
+<!--                and (task_id like concat('%', #{listPatrolRequest.searchField}, '%') or task_name like concat('%',-->
+<!--                #{listPatrolRequest.searchField}, '%'))-->
+<!--            </if>-->
+        </where>
+        order by last_modified_date desc
+    </select>
+
+</mapper>
